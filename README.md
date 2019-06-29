@@ -107,8 +107,9 @@ The format for the `plot` directive is *response_variable* __*__ (predictor1 pre
 One way ANOVA is silimar to the 2-sample __T test__, in that we are trying to see if the population means of different populations are same or not, but unlike the 2-sample __T-Test__, the **One Way ANOVA can compare the means of more than 2 populations**.
 ANOVA compares the within-group variation to the between-group variation to evaluate if the populations have the same mean.
 
-R<sup>2</sup> is the co-efficient of determination and is between 0 and 1. Its a measure of how much the predictor variables explain the variability in the data. The closer it is to 1, the predictor variables explain a larger portion of the variability and the closer it is to 0 the lesser the predictor variables are at explaining the variability.
-In the ANOVA table the __F-value__ indicates the amount of variablility explained by the model and the larger the value the more variability is explained by the model. The P-Value is the probability of getting an F-Value atleast as extreme as thats computed by chance, and if its less than the signifance level then we can reject the H0 of the population means being equal.
+R<sup>2</sup> called the co-efficient of determination, is a measure of how much the predictor variables explain the variability in the data and is between 0 and 1. The closer it is to 1, the predictor variables explain a larger portion of the variability and the closer it is to 0 the lesser the predictor variables are at explaining the variability. So this can be seen as a measure of how well we have chosen our predictor variables, and how well they explain the effect.
+
+In the ANOVA table the __F-value__ indicates the amount of variability explained by the model and the larger the value, the more variability is explained by the model. The P-Value is the probability of getting an F-Value at least as extreme as thats computed by chance, and if its less than the significance level then we can reject the H0 of the population means being equal.
 
 ### Assumptions
 
@@ -124,14 +125,22 @@ PROC GLM data=stat1.garlic plots=diagnostics;
 RUN;
 ```
 
-In `PROC GLM`, the `plots=diagnostics` option generates a panel of plots that lets us validate the normailty of error terms assumptions. The `class` is the categorical variable. `model` specifies the response and predictor variables in the model. The `means` includes the option to run the `hovtest` (using levene's method in this case).
+In `PROC GLM`, the `plots=diagnostics` option generates a panel of plots that lets us validate the normality of error terms assumptions. The `class` is the categorical variable. `model` specifies the response and predictor variables in the model. The `means` includes the option to run the `hovtest` (using levene's method in this case).
 
-The `PROC GLM` displays the ANOVA table with the F-Value as well as the P value. If the P value is lesser than the significance level then we can say that the probability of seeing an F-value as extreme as the one computed, purely by chance is very small, and we can reject the H0 that the population means are equal (in other words, the predictor valuable values do not affect the response variable). But before we can trust the P-value, we need to check the assumptions. The Normal QQ plots and the histograms give us an idea if the error terms are following a normal distribution. The HOV test will produce a test statistic and a P-value whcih we can use to evaluate the H0 of equal variances in the error terms. This simply tells us that at leat one of levels in the categorical predictor variable has a significant effect on the response variable. To know which level has this effect, we need the post-hoc tests to compare every category level in the predictor with each other or against a chosed reference level.
+The `PROC GLM` displays the ANOVA table with the F-Value as well as the P value. If the P value is lesser than the significance level then we can say that the probability of seeing an F-value as extreme as the one computed, purely by chance is very small, and we can reject the H0 that the population means are equal (in other words, we reject the idea that the predictor valuable values do not affect the response variable). But before we can trust the P-value, we need to check the assumptions. The Normal QQ plots and the histograms give us an idea if the error terms are following a normal distribution. 
+
+The HOV test will produce a test statistic and a P-value which we can use to evaluate the H0 of equal variances in the error terms. This simply tells us that at least one of levels in the categorical predictor variable has a significant effect on the response variable. To know which level has this effect, we need the post-hoc tests to compare every category level in the predictor with each other or against a chosen reference level.
 
 ## POST HOC PairWise Comparison - Detect which level in a cat.Predictor level is causing effect in ANOVA
 
 If we reject the H0 in AVONA, and determine that at-least one of the predictor variable levels is significantly different from the others, we  use the Post Hoc pairwise comparisons to see which one (or more) is different.
-Here we can use __Tukey's adjustment__ to compare between every pair or __Dunnett's Adjustment__ to compare each category against a single "control" group. The results of the post hoc analysis are graphed using a diffogram. The diffogram's diagonal line represents the case when there is no difference between the means. Each pairwise comparison is plotted and the confidence intervals are represented as lines. If the condifence interval line touches the diagonal, then the means are not significantly different.
+Here we can use 
+
+* __Tukey's adjustment__ to compare between every pair
+or
+* __Dunnett's Adjustment__ to compare each category against a single "control" group
+
+The results of the post hoc analysis are graphed using a diffogram. The diffogram's diagonal line represents the case when there is no difference between the means. Each pairwise comparison is plotted and the confidence intervals are represented as lines. If the condifence interval line touches the diagonal, then the means are not significantly different.
 Control plots are another mechanism used for Dunnets's method where there is a control group. The Control plot has a shaded area and lines that represent the mean. if the line falls inside the shaded area, then the difference means for that variable compared to the control group is not significant.
 
 ```SAS
