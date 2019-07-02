@@ -42,10 +42,10 @@
 
 ## Hypothesis Testing
 
-|                    | H0 is __true__     | H0 is __false__                 |
-| ------------------ | ------------------ | ------------------------------- |
-| __Fail to Reject__ | correct inference  | Type 2 Error  P= β              |
-| __Reject__         | Type 1 error   P=α | Correct inference / Power= P= 1-β |
+|                    | H<sub>0</sub> is __true__     | H<sub>0</sub> is __false__                 |
+| ------------------ | ----------------------------- | ------------------------------- |
+| __Fail to Reject__ | correct inference             | Type 2 Error  P= β              |
+| __Reject__         | Type 1 error   P=α            | Correct inference / Power= P= 1-β |
 
 ## Failing to Reject vs. Accept
 
