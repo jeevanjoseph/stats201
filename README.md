@@ -21,26 +21,30 @@
   - [Pearson Correlation](#Pearson-Correlation)
     - [Detect degree of linear relationship between variables](#Detect-degree-of-linear-relationship-between-variables)
   - [Linear Regression](#Linear-Regression)
-    - [Analyze the effect of a cont.Predictor on a cont.Response, also use the model to predict response.](#Analyze-the-effect-of-a-contPredictor-on-a-contResponse-also-use-the-model-to-predict-response)
-  - [N-Way ANOVA](#N-Way-ANOVA)
-    - [Analyze the effect of more than one cat.Predictors on a cont.Response](#Analyze-the-effect-of-more-than-one-catPredictors-on-a-contResponse)
-  - [Multiple Linear Regression](#Multiple-Linear-Regression)
-    - [Analyze the effect of multiple cont.Predictors on a cont.Response](#Analyze-the-effect-of-multiple-contPredictors-on-a-contResponse)
-  - [Model Selection](#Model-Selection)
-    - [Selecting the best models from all possible ones](#Selecting-the-best-models-from-all-possible-ones)
-  - [Information Criterion](#Information-Criterion)
-    - [comparative model evaluation (not absolute).](#comparative-model-evaluation-not-absolute)
-  - [Model Post Fitting](#Model-Post-Fitting)
-    - [Ensuring the model assumptions are met before trusting the model](#Ensuring-the-model-assumptions-are-met-before-trusting-the-model)
-  - [Outliers vs. Influential Observations](#Outliers-vs-Influential-Observations)
-  - [Detecting Collinearity](#Detecting-Collinearity)
-    - [Collinearity leads to biases in the model](#Collinearity-leads-to-biases-in-the-model)
+    - [Simple Linear Regression](#Simple-Linear-Regression)
+      - [Analyze the effect of a cont.Predictor on a cont.Response, also use the model to predict response.](#Analyze-the-effect-of-a-contPredictor-on-a-contResponse-also-use-the-model-to-predict-response)
+    - [N-Way ANOVA](#N-Way-ANOVA)
+      - [Analyze the effect of more than one cat.Predictors on a cont.Response](#Analyze-the-effect-of-more-than-one-catPredictors-on-a-contResponse)
+    - [Multiple Linear Regression](#Multiple-Linear-Regression)
+      - [Analyze the effect of multiple cont.Predictors on a cont.Response](#Analyze-the-effect-of-multiple-contPredictors-on-a-contResponse)
+    - [Model Selection for Linear Regression Models](#Model-Selection-for-Linear-Regression-Models)
+      - [Selecting the best models from all possible ones](#Selecting-the-best-models-from-all-possible-ones)
+    - [Information Criterion](#Information-Criterion)
+      - [Measures for comparative model evaluation](#Measures-for-comparative-model-evaluation)
+    - [Model Post Fitting](#Model-Post-Fitting)
+      - [Steps to ensure the model assumptions are met before trusting the model](#Steps-to-ensure-the-model-assumptions-are-met-before-trusting-the-model)
+    - [Outliers vs. Influential Observations](#Outliers-vs-Influential-Observations)
+    - [Detecting Collinearity](#Detecting-Collinearity)
+      - [Collinearity leads to biases in the model](#Collinearity-leads-to-biases-in-the-model)
   - [Predictive modelling](#Predictive-modelling)
     - [Applying a selected model to a new dataset](#Applying-a-selected-model-to-a-new-dataset)
   - [Data Scoring with your model](#Data-Scoring-with-your-model)
     - [Apply a model to predict response variables in a new dataset](#Apply-a-model-to-predict-response-variables-in-a-new-dataset)
   - [Logistic Regression](#Logistic-Regression)
     - [Model the relationship between a **binary response** vs. set of predictors (cont. or cat.)](#Model-the-relationship-between-a-binary-response-vs-set-of-predictors-cont-or-cat)
+    - [PROC FREQ](#PROC-FREQ)
+      - [Discover associations between categorical variables](#Discover-associations-between-categorical-variables)
+    - [Tests of association](#Tests-of-association)
 
 ## Hypothesis Testing
 
@@ -223,7 +227,9 @@ RUN;
 
 ## Linear Regression
 
-### Analyze the effect of a cont.Predictor on a cont.Response, also use the model to predict response.
+### Simple Linear Regression
+
+#### Analyze the effect of a cont.Predictor on a cont.Response, also use the model to predict response.
 
 The basis of linear regression should be familiar. The `PROC REG` is the SAS proc for linear regression. The proc will create an ANOVA table and compute the F-statistic and the P-value for it , with the H0 being that the response variable and the predictor do not have any association. So if the p-value is significant(< alpha), the we can reject this H0 (no association) and infer that there is a significant association between the predictor and the response variable.
 
@@ -236,9 +242,9 @@ PROC REG data=stat1.bodyfat2
  run;
 ```
 
-## N-Way ANOVA
+### N-Way ANOVA
 
-### Analyze the effect of more than one cat.Predictors on a cont.Response
+#### Analyze the effect of more than one cat.Predictors on a cont.Response
 
 The reason to do an N-way (N = # of cat.Predictors) ANOVA rather than N * One-Way ANOVAs is that N-Way ANOVA also analyses the __interactions__ between the N predictors. Also note that a One-Way ANOVA has one cat.Predictor with N levels, while an N-way ANOVA has N cat.Predictors, each with thier own levels.
 
@@ -268,9 +274,9 @@ quit;
 
 Here the cat.Predictors we are using are drugdose and disease, in the `CLASS`. The `MODEL` includes the reponse variable and the predictors and the interaction term. `LSMEANS` will produce the lsmeans table, and here we are slicing it by the disease. This includes the F value for each ans corresponding P-value, which will tell us if the particular `slice` has a ststistically significant effect for each slice.  
 
-## Multiple Linear Regression
+### Multiple Linear Regression
 
-### Analyze the effect of multiple cont.Predictors on a cont.Response
+#### Analyze the effect of multiple cont.Predictors on a cont.Response
 
 A best practice in a two-way ANOVA is to plot the data to identify possible interactions between the variables. An interaction occurs when the difference between group means of one variable changes at different levels of another variable. This causes non-parallel lines in the interaction plot.
 
@@ -286,9 +292,9 @@ QUIT;
 In the example, the `PROC REG` is used like in the case of Linear Regression, but there are more terms in the model. This generates the standard ANOVA table for the overall model  performance, and the P-value will indicate if there is a significant effect on the response by the predictors. If we have a lot of predictors, we should use the adjusted R<sup>2</sup> to account for the effect of additional terms.
 The table also gives the parameter estimates for all the terms and we can try to eliminate the terms with the highest P-value (least significant) to simplify the model without sacrificing accuracy. Every term removed will reduce the overall P-value, but the magnitude of the reduction will be small the more insignificant the term is (removing an highly effective term will increase the overall model P-value considerably)
 
-## Model Selection
+### Model Selection for Linear Regression Models
 
-### Selecting the best models from all possible ones
+#### Selecting the best models from all possible ones
 
 With _k_ predictors, there will be _2<sup>k</sup>_ models. So we need tools that can evaluate models and select effective models.
 Common Model selection approaches :
@@ -326,11 +332,11 @@ PROC GLMSELECT data=STAT1.ameshousing3 plots=all;
 run;
 ```
 
-## Information Criterion
+### Information Criterion
 
-### comparative model evaluation (not absolute).
+#### Measures for comparative model evaluation
 
-Information criterion are used to comparatively assess the fit of a model between many. They all try to point to the model that explains the most variability in the data with the least predictors. They all have a penalty to using more variables in the model and this penalty is what is different between them. Smaller values for information criteria is considered better.
+Information criterion are used to comparatively assess the fit of a model between many. They all try to point to the **model that explains the most variability in the data with the least predictors**. They all have a penalty to using more variables in the model and this penalty is what is different between them. ***Smaller values for information criteria is considered better.***
 - AIC
 - AICC (Corrected AIC) - Used for small sample sizes
 - BIC
@@ -338,9 +344,9 @@ Information criterion are used to comparatively assess the fit of a model betwee
 
 Adjusted _R<sup>2</sup>_ is similar to the Information Criteria in that, it penalizes the addition of terms. Since adding a term will never reduce _R<sup>2</sup>_ value since the worst that could happen is that the term added has no effect on the response variable and hence the _R<sup>2</sup>_ stays the same. The model becomes unnecessarily complex however, and this is why adjuisted _R<sup>2</sup>_ will give a better estimate and balance the complexity of the model vs the variability explained by it.
 
-## Model Post Fitting
+### Model Post Fitting
 
-### Ensuring the model assumptions are met before trusting the model
+#### Steps to ensure the model assumptions are met before trusting the model
 
 A model might have an impressive _R<sup>2</sup>_ value, but that does not mean that the model is accurate, if we violated our model assumptions when we created it. The assumptions are :
 
@@ -358,7 +364,7 @@ The pattern in the residual plots indicate the assumption that is being violated
     - Funnel  shape -> `assumption of equal variances` of the error terms are violatied
     - Cycle/Sine Wave shape -> assumption of independent measurements is violated.
 
-## Outliers vs. Influential Observations
+### Outliers vs. Influential Observations
 
 An Outlier is an unusual datapoint, whereas an Influential Observation is an Outlier that has a significant effect on the model. If removing an observation produces a significant change to the parameter estimates, then that is an influenatial observation.
 
@@ -409,9 +415,9 @@ quit;
 
 ```
 
-## Detecting Collinearity
+### Detecting Collinearity
 
-### Collinearity leads to biases in the model
+#### Collinearity leads to biases in the model
 
 Collinearity or AutoCollinearity is when the predictors are closely related. This does not violate any test assumptions, however it leads to biases and incorrect P-values.
 
@@ -505,4 +511,29 @@ It models the probability of an outcome based on the predictor variables. In log
 - Hypothesis tests are used to verify the realtionship between the the predictors and the response variable.
 - A classifier model is built using the discovered realtionships with the predictors.
 - The model is used to predict or classify new data in to one of the the two levels of the response variable.
+
+### PROC FREQ
+
+#### Discover associations between categorical variables
+
+`PROC FREQ` can display frequencies of the input variables or generate cross tabulation tables to discover associations between the categorical variables.
+
+### Tests of association
+
+When the frequency analysis of the categorical varibles point to a difference in the distribution of the data, we need to make sure this distribution difference is not by chance, and there is actually an association. 
+
+> Chi-Squared Test, tests this association between categorical variables to make sure the differences in distribution are not by chance
+
+Once we determine that there is an association, then we can measure the magnitude of this association.
+
+> The Cramer's V statistic can be used to measure the strength of an association.
+
+General points:
+
+- The Chi-Squared statistic measures the difference between the expected and the observed frequences in a cross tabulation.
+- The greater the difference, the more the likely there is an association.
+- The test generates a 𝛘<sup>2</sup> statistic and it's p-value.
+- The 𝛘<sup>2</sup> statistic depends on the sample size and does not indicate the magnitude of the association. You can duplicate every obs and double the 𝛘<sup>2</sup> statistic.
+- Cramer's V statistic measures the magnitude of the association.
+- Cramer's V ranges from -1---0---+1 or 0---+1. The closer it is to 0, the weaker the association. 
 
