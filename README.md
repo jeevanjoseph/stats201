@@ -34,11 +34,13 @@
     - [Ensuring the model assumptions are met before trusting the model](#Ensuring-the-model-assumptions-are-met-before-trusting-the-model)
   - [Outliers vs. Influential Observations](#Outliers-vs-Influential-Observations)
   - [Detecting Collinearity](#Detecting-Collinearity)
-    - [Leads to biases in the model](#Leads-to-biases-in-the-model)
+    - [Collinearity leads to biases in the model](#Collinearity-leads-to-biases-in-the-model)
   - [Predictive modelling](#Predictive-modelling)
     - [Applying a selected model to a new dataset](#Applying-a-selected-model-to-a-new-dataset)
   - [Data Scoring with your model](#Data-Scoring-with-your-model)
     - [Apply a model to predict response variables in a new dataset](#Apply-a-model-to-predict-response-variables-in-a-new-dataset)
+  - [Logistic Regression](#Logistic-Regression)
+    - [Model the relationship between a **binary response** vs. set of predictors (cont. or cat.)](#Model-the-relationship-between-a-binary-response-vs-set-of-predictors-cont-or-cat)
 
 ## Hypothesis Testing
 
@@ -409,7 +411,7 @@ quit;
 
 ## Detecting Collinearity
 
-### Leads to biases in the model
+### Collinearity leads to biases in the model
 
 Collinearity or AutoCollinearity is when the predictors are closely related. This does not violate any test assumptions, however it leads to biases and incorrect P-values.
 
@@ -493,3 +495,14 @@ Scoring can be done 3 ways :
       ```
     - No need to share the item store the generated code will contain everything needed to do scoring.
     - compatible with older versions of SAS.
+  
+## Logistic Regression
+
+### Model the relationship between a **binary response** vs. set of predictors (cont. or cat.)
+
+It models the probability of an outcome based on the predictor variables. In logistic regression, the dependent/response variable is always a categorical variable with two levels.
+
+- Hypothesis tests are used to verify the realtionship between the the predictors and the response variable.
+- A classifier model is built using the discovered realtionships with the predictors.
+- The model is used to predict or classify new data in to one of the the two levels of the response variable.
+
