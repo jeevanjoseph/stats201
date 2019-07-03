@@ -45,6 +45,7 @@
     - [PROC FREQ](#PROC-FREQ)
       - [Discover associations between categorical variables](#Discover-associations-between-categorical-variables)
     - [Tests of association](#Tests-of-association)
+    - [Detecting Ordinal Associations](#Detecting-Ordinal-Associations)
 
 ## Hypothesis Testing
 
@@ -533,7 +534,44 @@ General points:
 - The Chi-Squared statistic measures the difference between the expected and the observed frequences in a cross tabulation.
 - The greater the difference, the more the likely there is an association.
 - The test generates a 𝛘<sup>2</sup> statistic and it's p-value.
-- The 𝛘<sup>2</sup> statistic depends on the sample size and does not indicate the magnitude of the association. You can duplicate every obs and double the 𝛘<sup>2</sup> statistic.
+- The 𝛘<sup>2</sup> statistic depends on the sample size and does not indicate the magnitude of the association. You can duplicate every obs and double the 𝛘<sup>2</sup> statistic. So for very small samples, you may see the 𝛘<sup>2</sup> statistic is small and the P-value is larger, but it can be artificailly changed by duplicating the observations. In other words, the results point only to the existence of the association but not its strength.
 - Cramer's V statistic measures the magnitude of the association.
 - Cramer's V ranges from -1---0---+1 or 0---+1. The closer it is to 0, the weaker the association. 
+
+|              |male     |female    | Row.total|
+|--------      |---------|----------|-----|
+|survived      |(E=)O=2  |(E=)O=10  |12   |
+|perished      |(E=)O=10 |(E=)O=2   |12   |
+|**Col.Total** |12       |12        |Total.Obs=**24**   |
+
+The expected cell counts for *H<sub>0</sub> = There exists no associacation between survival and gender* are :
+> (Row.Tot * Col.Tot)/Obs.Tot . (12*12)/24 = 6
+
+The 𝛘<sup>2</sup> test can be performed by the `PROC FREQ` procedure.
+
+``` SAS
+PROC freq data=stat1.safety;
+TABLES (Type Region Size Weight) * Unsafe / CHISQ;
+run;
+```
+
+This creates cross tabulation reports with each of the predictors with the variable "Unsafe", and the `CHISQ` option for the `TABLES` statement performs the 𝛘<sup>2</sup> test and produces the 𝛘<sup>2</sup> statistic and the P-values.
+
+### Detecting Ordinal Associations
+
+Ordinal associations are cases where the predictor is an ordinal (category levels with a natuaral order : size=small/medium/big) and the association is ordinal in nature. The distribution of the response consistently increase/decrease across the predictor levels.
+
+Ordinal associations are tested using the **Mantel-Haenszel Chi-Squared** test, which is sensitive to the  order of the predictor levels.
+
+The **Spearman corellation statistic** is used to measure the magnitude of the association.
+
+Just like the Pearson Chi-Squared test :
+
+- It does not measure the magnitude of the association
+- It simply evalutates if there is an associaton
+- It is influenced by the sample size and for small sample sizes the value will be low with an insignificant P-value.
+- Spearman's correlation statistic is not affected by sample size
+- It ranges from -1----0---+1 with values near to -/+1 indicating a strong -/+ correlation and values close to 0 indicating a weak correlation.
+
+
 
