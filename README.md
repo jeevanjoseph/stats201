@@ -614,6 +614,17 @@ The options are as follows :
   - AIC     - Penalizes the number of predictors, but not sample size
   - SC/SBC  - Larger penalty for #predictors, and also adjusts for sample size. This metric favors the most parsimonious models.
   - -2Log L - -2* Log(Likelihood) - the value depends on the  number of predictors, so this cannot be used to compare models with varying number of predictors.
-- The Odds Ratio table shows the odds ratio and the onfidence limits of the odds ratio should not include 1 to be significant. 
+  - Association of predicted probabilities with observations
+    - This is a goodness of fit measure that used the model to evaluate the dataset itself.
+    - All possible pair-wise combinations of the obs from either of the two binary response var is created.
+    - The model is used to see if the model would have predicted the outcome correctly. ie, the predicted probability of the desired outcome is higher. This is also called **concordant**.
+    - When the model's predicted probability for an outcome does not match the actual outcome, its called **discordant**.
+    - When the model predicts equal probability of either outcome, it is a **tie**.
+    - More concordant pairs and less ties and discordant pairs in a model makes it a better model.
+    - The following statistics can be calculated.
+      - Somer's D, Gamma, Tau-A, C (Concordant statistic)
+      - Larger values for these statistics indicate a better fitting model.
+- The Odds Ratio table shows the odds ratio and the confidence limits of the odds ratio should not include 1 to be significant.
+- 
 
 
