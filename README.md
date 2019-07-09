@@ -654,4 +654,3 @@ The sample above does the following :
   - The `CLODDS=PL`  requests Profile Likelihood confidence limits (and also makes the oddsratio plot available for the plot option in the proc) 
   
 ### Interaction effects in Logistic regression
-
