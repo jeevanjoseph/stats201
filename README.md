@@ -47,6 +47,7 @@
     - [Tests of association](#Tests-of-association)
     - [Detecting Ordinal Associations](#Detecting-Ordinal-Associations)
     - [PROC LOGISTIC](#PROC-LOGISTIC)
+    - [Interaction effects in Logistic regression](#Interaction-effects-in-Logistic-regression)
 
 ## Hypothesis Testing
 
@@ -614,6 +615,9 @@ The options are as follows :
   - AIC     - Penalizes the number of predictors, but not sample size
   - SC/SBC  - Larger penalty for #predictors, and also adjusts for sample size. This metric favors the most parsimonious models.
   - -2Log L - -2* Log(Likelihood) - the value depends on the  number of predictors, so this cannot be used to compare models with varying number of predictors.
+  - Testing global H0 - all regression co-effs are 0.
+    - Use the **likelihood ratio** rather than the wald test to verify the gloabl H0. We can say that at least one regression co-eff is != 0 if the likelihood ratio's P-value is significant.
+  - Analysis of Maximum Likelihood estimates - This table tells us which regression co-effs are significant, based on the Wald Chi-Squared test and its P-value. Compared to the Type-3 Analysis of effects, this is more detailed since this breaks down the analysis by the levels in the catergorical predictors.
   - Association of predicted probabilities with observations
     - This is a goodness of fit measure that used the model to evaluate the dataset itself.
     - All possible pair-wise combinations of the obs from either of the two binary response var is created.
@@ -625,6 +629,25 @@ The options are as follows :
       - Somer's D, Gamma, Tau-A, C (Concordant statistic)
       - Larger values for these statistics indicate a better fitting model.
 - The Odds Ratio table shows the odds ratio and the confidence limits of the odds ratio should not include 1 to be significant.
-- 
 
+Sample :
+
+``` SAS 
+PROC LOGISTIC data=stat1.safety plots(only)=(effect oddsratio);
+class region(ref='Asia') size(ref='3') / param=ref;
+model Unsafe(event='1') = region size weight / clodds=pl;
+run;
+```
+
+The sample above does the following :
+
+- data is from the safety dataset.
+- Plots requests the effect plot (sigmoidal) and the odds ratio plot.
+- CLASS identifies the region and size as cat.Predictors.
+  - The `ref=` arg sets the reference level for each cat.predictor
+  - The `param=ref` option specifies that reference cell coding should be used.
+- Model speficies that the response variable is *Unsafe* and that we are modelling the event where Unsafe = 1.
+  - The `CLODDS=PL`  requests Profile Likelihood confidence limits (and also makes the oddsratio plot available for the plot option in the proc) 
+  
+### Interaction effects in Logistic regression
 
