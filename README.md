@@ -604,18 +604,22 @@ RUN;
 ```
 The options are as follows :
 
+- A `CLASS` statement can be specified to include cat.Predictors.
+  - The referecen level in a cat.Predictor can be specified by the `ref` option. By default the reference level is the last level in alphanumerin order.
+  - The paramterization (coding used for the levels) can be either 
+    - Effect coding - default - compares the difference between each level and the average with all levels.
+    - referece cell coding - `param=ref` - compares the difference between each level and the referece level (default = last level in alpha numeric order) 
 - The `event` keyword specifies which reponse level probaility we are modelling. By default this is the first in the alphanumeric order, so usually the model predicts the value for 0.
 - `clodds` - Confidence limit odds - can be:
   -  PL - Profile Likelibood (conpute intensive, but works well with smaller sample sizes.)
   -  Wald - Default value, and requires lesser computation, but not good for small sample sizes.
-
-- In the output, always check the 'Probability Modelled', make sure the model is modelling the desired outcome.
+- In the output, always check the '**Probability Modelled**', make sure the model is modelling the desired outcome.
 - Model Convergence - make sure that the model converges, without this the results cannot be trusted.
 - Model Fit statistics
-  - AIC     - Penalizes the number of predictors, but not sample size
-  - SC/SBC  - Larger penalty for #predictors, and also adjusts for sample size. This metric favors the most parsimonious models.
-  - -2Log L - -2* Log(Likelihood) - the value depends on the  number of predictors, so this cannot be used to compare models with varying number of predictors.
-  - Testing global H0 - all regression co-effs are 0.
+  - **AIC**     - Penalizes the number of predictors, but not sample size
+  - **SC/SBC**  - Larger penalty for #predictors, and also adjusts for sample size. This metric favors the most parsimonious models.
+  - **-2Log L** - -2* Log(Likelihood) - the value depends on the  number of predictors, so this cannot be used to compare models with varying number of predictors.
+  - **Testing global H0** - all regression co-effs are 0.
     - Use the **likelihood ratio** rather than the wald test to verify the gloabl H0. We can say that at least one regression co-eff is != 0 if the likelihood ratio's P-value is significant.
   - Analysis of Maximum Likelihood estimates - This table tells us which regression co-effs are significant, based on the Wald Chi-Squared test and its P-value. Compared to the Type-3 Analysis of effects, this is more detailed since this breaks down the analysis by the levels in the catergorical predictors.
   - Association of predicted probabilities with observations
