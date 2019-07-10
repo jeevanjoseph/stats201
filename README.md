@@ -679,3 +679,4 @@ Using a logistic regression model to predict or score a new dataset is done simi
 - `PROC PLM` is then used with the `restore=` option to read the item store and then
   - `SCORE data= out=` statement can be used to score in modern SAS versions
   - CODE statement is used to generate the scoring code.
+
