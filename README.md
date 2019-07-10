@@ -43,7 +43,8 @@
   - [Logistic Regression](#Logistic-Regression)
     - [Model the relationship between a **binary response** vs. set of predictors (cont. or cat.)](#Model-the-relationship-between-a-binary-response-vs-set-of-predictors-cont-or-cat)
     - [PROC FREQ](#PROC-FREQ)
-      - [Discover associations between categorical variables](#Discover-associations-between-categorical-variables)
+      - [Discover associations and evaluate classifier performance](#Discover-associations-and-evaluate-classifier-performance)
+    - [Classifier Performance](#Classifier-Performance)
     - [Tests of association](#Tests-of-association)
     - [Detecting Ordinal Associations](#Detecting-Ordinal-Associations)
     - [PROC LOGISTIC](#PROC-LOGISTIC)
@@ -530,9 +531,46 @@ It models the probability of an outcome based on the predictor variables. In log
 
 ### PROC FREQ
 
-#### Discover associations between categorical variables
+#### Discover associations and evaluate classifier performance
 
 `PROC FREQ` can display frequencies of the input variables or generate cross tabulation tables to discover associations between the categorical variables.
+
+### Classifier Performance
+
+Classifier performance is an indication of how well our model performs with respect to known data. Any logistic model (predicting a binary target) will have some False Positives, False Negatives, True Positives and True Negatives. A model that minimizes the false positives and false negatives is a better model.
+
+Consider the following confusion matrix (table with predicted binary reponses and actual binary responses)
+
+|            |Predicted True| Predicted False| Total|
+-------------|--------------|----------------|------|
+|Actual True |100   (TP)    |8      (FN)     | 108  |
+|Actual False|2     (FP)    |50     (TN)     |52    |
+|Total       |102           |58              |160   |
+
+- True Positive (TP) - The model predicted a positive result, and the result as infact positive
+- False Positive (FP) - The model predicted a positive result, but the actual result as negaive. Disease model predits a patient will have a disease but he does not.
+- True Negative (TN) - The model predicts a negative result and the result is infact negative.
+- False Negative (FN) - The model predicts a negative result, but the actual result is positive. Disease model predicts no disease, but the person actually is diseased.
+- Accuracy: Overall, how often is the classifier correct?
+  - (TP+TN)/total = (100+50)/160 = 0.91
+- Misclassification Rate: Overall, how often is it wrong?
+  - (FP+FN)/total = (10+5)/165 = 0.09
+  - equivalent to 1 minus Accuracy also known as "Error Rate"
+- Sensitivity / True Positive Rate: When it's actually yes, how often does it predict yes?
+  - TP/actual yes = 100/105 = 0.95
+  - also known as "Recall"
+- False Positive Rate: When it's actually no, how often does it predict yes?
+  - FP/actual no = 10/60 = 0.17
+- Specificity / True Negative Rate: When it's actually no, how often does it predict no?
+  - TN/actual no = 50/60 = 0.83
+  - equivalent to 1 minus False Positive Rate
+- Precision: When it predicts yes, how often is it correct?
+  - TP/predicted yes = 100/110 = 0.91
+- Prevalence: How often does the yes condition actually occur in our sample?
+  - actual yes/total = 105/165 = 0.64
+- ROC curve & AUC - ROC Curve is plotted between the TPR/Sensitivity (y-axis) vs. False Positive Rate(x-axis). You set a thereshold to minimize False Positives, or maximize true poistives. If the model is very discriminating, then we would have a good TPR for a low threshold of FPR. The AUC is the are under th curve and ranges from .5 to 1, and the larger the area, the more discrininating the model. So better models have a ROC that hugs the top left corner.
+
+
 
 ### Tests of association
 
