@@ -36,8 +36,8 @@
     - [Outliers vs. Influential Observations](#Outliers-vs-Influential-Observations)
     - [Detecting Collinearity](#Detecting-Collinearity)
       - [Collinearity leads to biases in the model](#Collinearity-leads-to-biases-in-the-model)
-  - [Predictive modelling](#Predictive-modelling)
-    - [Applying a selected model to a new dataset](#Applying-a-selected-model-to-a-new-dataset)
+    - [Predictive modelling with Linear Regression](#Predictive-modelling-with-Linear-Regression)
+      - [Applying a selected model to a new dataset](#Applying-a-selected-model-to-a-new-dataset)
   - [Data Scoring with your model](#Data-Scoring-with-your-model)
     - [Apply a model to predict response variables in a new dataset](#Apply-a-model-to-predict-response-variables-in-a-new-dataset)
   - [Logistic Regression](#Logistic-Regression)
@@ -443,9 +443,9 @@ Collinearity or AutoCollinearity is when the predictors are closely related. Thi
   - this compares the predictors in the `VAR` with the one specified by `WITH` and generates the Pearson Correlation for each comparison. This tells us if any of the predictors in the `VAR` are correlated with the one in `WITH` 
 - Alternatively, `PROC REG` with the VIF option will report the variance inflation or `VIF` along with the parameter estimates. __If the VIF for any term is greater than 10, then the term is likely involved in collinearity.__
 
-## Predictive modelling
+### Predictive modelling with Linear Regression
 
-### Applying a selected model to a new dataset
+#### Applying a selected model to a new dataset
 
 Predcitive modelling start with **data partitioning**. The model is trained and the validation set is used to evaluate the model. Then the best model is chosen and applied to new data to predict the outcome.
 
@@ -743,3 +743,29 @@ Using a logistic regression model to predict or score a new dataset is done simi
   - CODE statement is used to generate the scoring code.
 
 ## Data preparation
+
+- Missing data
+  - Complete case analysis - default in many procedures.
+    - Leads to bias in the sample
+    - `PROC LOGISTIC` with a `SCORE` will not score a new record that has a missing value
+  - Imputing
+    - `PROC STDIZE` can impute values in a dataset based on the method specified
+      - `REPONLY` replaces the missing values with imputed values
+      - `REPLACE` replaces the missing values with 0
+      - `METHOD` selects an imputation method - mean median etc.
+      - `DATA` - input dataset
+      - `OUT` - output dataset
+  
+    - Impute with median or other measures
+      - simple but does not take in to account the effect of other vars
+        - ex: when imputing the value of a home, rather than the median of all home prices, its better to impute the median of the homes in the same zipcode.
+      - median is resistant to outliers
+      - use when there is missing <= 50% of cases
+      - If more than 50% of the values are missing,m then perhaps avoid that variable
+    - Cluster Imputation
+      - divides the dataset in to separate clusters based on other variables and imputed values based on the measures for the cluster/subset.
+      - ex: the home value imputation example above
+      - `PROC FASCLUS` does cluster imputation in SAS
+        - It creates clusters based on the parameters in the VAR statement
+    - Cat.Vars
+      - Create a new level in the cat.var that represent the missing values
