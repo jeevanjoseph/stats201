@@ -48,8 +48,11 @@
     - [Tests of association](#Tests-of-association)
     - [Detecting Ordinal Associations](#Detecting-Ordinal-Associations)
     - [PROC LOGISTIC](#PROC-LOGISTIC)
+      - [Oversampling](#Oversampling)
+      - [Result interpretation](#Result-interpretation)
     - [Interaction effects in Logistic regression](#Interaction-effects-in-Logistic-regression)
     - [Predictive analysis/ Scoring using Logistic regression](#Predictive-analysis-Scoring-using-Logistic-regression)
+  - [Data preparation](#Data-preparation)
 
 ## Hypothesis Testing
 
@@ -547,28 +550,28 @@ Consider the following confusion matrix (table with predicted binary reponses an
 |Actual False|2     (FP)    |50     (TN)     |52    |
 |Total       |102           |58              |160   |
 
-- True Positive (TP) - The model predicted a positive result, and the result as infact positive
-- False Positive (FP) - The model predicted a positive result, but the actual result as negaive. Disease model predits a patient will have a disease but he does not.
-- True Negative (TN) - The model predicts a negative result and the result is infact negative.
-- False Negative (FN) - The model predicts a negative result, but the actual result is positive. Disease model predicts no disease, but the person actually is diseased.
-- Accuracy: Overall, how often is the classifier correct?
-  - (TP+TN)/total = (100+50)/160 = 0.91
-- Misclassification Rate: Overall, how often is it wrong?
-  - (FP+FN)/total = (10+5)/165 = 0.09
+- **True Positive (TP)** - The model predicted a positive result, and the result as infact positive
+- **False Positive (FP)** - The model predicted a positive result, but the actual result as negaive. Disease model predits a patient will have a disease but he does not.
+- **True Negative (TN)** - The model predicts a negative result and the result is infact negative.
+- **False Negative (FN)** - The model predicts a negative result, but the actual result is positive. Disease model predicts no disease, but the person actually is diseased.
+- **Accuracy**: Overall, how often is the classifier correct?
+  - (TP+TN)/total = (100+50)/160 = 0.94
+- **Misclassification Rate**: Overall, how often is it wrong?
+  - (FP+FN)/total = (8+2)/160 = 0.06
   - equivalent to 1 minus Accuracy also known as "Error Rate"
-- Sensitivity / True Positive Rate: When it's actually yes, how often does it predict yes?
-  - TP/actual yes = 100/105 = 0.95
+- **Sensitivity / True Positive Rate**: When it's actually yes, how often does it predict yes?
+  - TP/actual yes = 100/108 = 0.93
   - also known as "Recall"
-- False Positive Rate: When it's actually no, how often does it predict yes?
-  - FP/actual no = 10/60 = 0.17
-- Specificity / True Negative Rate: When it's actually no, how often does it predict no?
-  - TN/actual no = 50/60 = 0.83
+- **False Positive Rate**: When it's actually no, how often does it predict yes?
+  - FP/actual no = 2/52 = 0.04
+- **Specificity / True Negative Rate**: When it's actually no, how often does it predict no?
+  - TN/actual no = 50/52 = 0.96
   - equivalent to 1 minus False Positive Rate
-- Precision: When it predicts yes, how often is it correct?
-  - TP/predicted yes = 100/110 = 0.91
-- Prevalence: How often does the yes condition actually occur in our sample?
-  - actual yes/total = 105/165 = 0.64
-- ROC curve & AUC - ROC Curve is plotted between the TPR/Sensitivity (y-axis) vs. False Positive Rate(x-axis). You set a thereshold to minimize False Positives, or maximize true poistives. If the model is very discriminating, then we would have a good TPR for a low threshold of FPR. The AUC is the are under th curve and ranges from .5 to 1, and the larger the area, the more discrininating the model. So better models have a ROC that hugs the top left corner.
+- **Precision**: When it predicts yes, how often is it correct?
+  - TP/predicted yes = 100/102 = 0.98
+- **Prevalence**: How often does the yes condition actually occur in our sample?
+  - actual yes/total = 102/160 = 0.63
+- **ROC curve & AUC** - ROC Curve is plotted between the TPR/Sensitivity (y-axis) vs. False Positive Rate(x-axis). You set a thereshold to minimize False Positives, or maximize true poistives. If the model is very discriminating, then we would have a good TPR for a low threshold of FPR. The AUC is the are under th curve and ranges from .5 to 1, and the larger the area, the more discrininating the model. So better models have a ROC that hugs the top left corner.
 
 
 
@@ -637,7 +640,7 @@ In the sample above, the `PROC FREQ` generates the cross tabulation tables for R
 
 ### PROC LOGISTIC
 
-`PROC LOGISTIC` is the procedure in SAS to fit a logistic regression model for a binary response variable.
+`PROC LOGISTIC` is the procedure in SAS to fit a logistic regression model for a binary, ordinal or nominal response variable.
 
 ```SAS
 PROC LOGISTIC data= ameshousing_data plots(only)=(effect oddsratio);
@@ -655,7 +658,19 @@ The options are as follows :
 - `clodds` - Confidence limit odds - can be:
   -  PL - Profile Likelibood (conpute intensive, but works well with smaller sample sizes.)
   -  Wald - Default value, and requires lesser computation, but not good for small sample sizes.
-- In the output, always check the '**Probability Modelled**', make sure the model is modelling the desired outcome.
+
+#### Oversampling
+
+If we take a representative sample when modelling a rare event, then this may give us very few samples. Instead we can build a better (more obs) sample by, say choosing all the events in the population and a subset of the non-events. Now there is a larger proportion of the event in the sample, and the sample is biases. This is **oversampling**. The effect of oversampling needs to be adjusted after the model is built.
+
+- Oversampling leads to the intercept being higher. This difference is the Offset.
+- To correct the bias, the offset is applied to reduce the intercept
+- The offset only affects the intercept and not the other parameter estimates
+- The Pi-1 value of the population - the proportion of events in the population need to be known to compute the offset.
+
+#### Result interpretation
+
+In the output, always check the '**Probability Modelled**', make sure the model is modelling the desired outcome.
 - Model Convergence - make sure that the model converges, without this the results cannot be trusted.
 - Model Fit statistics
   - **AIC**     - Penalizes the number of predictors, but not sample size
@@ -674,7 +689,16 @@ The options are as follows :
     - The following statistics can be calculated.
       - Somer's D, Gamma, Tau-A, C (Concordant statistic)
       - Larger values for these statistics indicate a better fitting model.
-- The Odds Ratio table shows the odds ratio and the confidence limits of the odds ratio should not include 1 to be significant.
+- **The Odds Ratio** table shows the odds ratio and the confidence limits of the odds ratio should not include 1 to be significant.
+  - Odds ratios depend on the `UNITS` statement in the `PROC LOGISTIC`. If a `UNITS` statement is provided, then the default option should also be provided because any predictors without an explicit `UNITS` set will be exacluded from the set.
+  - Odds ratios measure how much a one unit change in the predictor changes the odds of the response (p(response)/1-p(response) ).
+  - The confidence limits of the the Odds Ratio has 1, then the predictor is not significant or does not change the odds of the response significantly.
+  - Ex: in a `MODEL genuine_product(event='1') = price`,  If the odds ratio for a $100 increase in price is 1.07, that means that there is a 7% increase in the odds that the item is genuine for every $100 increase in price. Odds ratio does not show the change in logit or probability (though these can be calculated).
+- **Analysis of maximum likelihood estimates**
+  - This table shows the parameter estimates for the model
+  - The Chi-squares values and the p-values are also shown
+  - The insignificant predictors will have an insignificant P value
+  - The most powerful predictors are found by looking at the **Standardized Estimate** column, where the rank order of the absolute value of the standardized estimate will yeild this order.
 
 Sample :
 
@@ -718,3 +742,4 @@ Using a logistic regression model to predict or score a new dataset is done simi
   - `SCORE data= out=` statement can be used to score in modern SAS versions
   - CODE statement is used to generate the scoring code.
 
+## Data preparation
