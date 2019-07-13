@@ -53,6 +53,8 @@
     - [Interaction effects in Logistic regression](#Interaction-effects-in-Logistic-regression)
     - [Predictive analysis/ Scoring using Logistic regression](#Predictive-analysis-Scoring-using-Logistic-regression)
   - [Data preparation](#Data-preparation)
+      - [Missing data](#Missing-data)
+      - [Redundant Data](#Redundant-Data)
 
 ## Hypothesis Testing
 
@@ -744,28 +746,54 @@ Using a logistic regression model to predict or score a new dataset is done simi
 
 ## Data preparation
 
-- Missing data
-  - Complete case analysis - default in many procedures.
-    - Leads to bias in the sample
-    - `PROC LOGISTIC` with a `SCORE` will not score a new record that has a missing value
-  - Imputing
-    - `PROC STDIZE` can impute values in a dataset based on the method specified
-      - `REPONLY` replaces the missing values with imputed values
-      - `REPLACE` replaces the missing values with 0
-      - `METHOD` selects an imputation method - mean median etc.
-      - `DATA` - input dataset
-      - `OUT` - output dataset
-  
-    - Impute with median or other measures
-      - simple but does not take in to account the effect of other vars
-        - ex: when imputing the value of a home, rather than the median of all home prices, its better to impute the median of the homes in the same zipcode.
-      - median is resistant to outliers
-      - use when there is missing <= 50% of cases
-      - If more than 50% of the values are missing,m then perhaps avoid that variable
-    - Cluster Imputation
-      - divides the dataset in to separate clusters based on other variables and imputed values based on the measures for the cluster/subset.
-      - ex: the home value imputation example above
-      - `PROC FASCLUS` does cluster imputation in SAS
-        - It creates clusters based on the parameters in the VAR statement
-    - Cat.Vars
-      - Create a new level in the cat.var that represent the missing values
+#### Missing data
+
+- Complete case analysis - default in many procedures.
+  - Leads to bias in the sample
+  - `PROC LOGISTIC` with a `SCORE` will not score a new record that has a missing value
+- **Imputing**
+  - `PROC STDIZE` can impute values in a dataset based on the method specified
+    - `REPONLY` replaces the missing values with imputed values
+    - `REPLACE` replaces the missing values with 0
+    - `METHOD` selects an imputation method - mean median etc.
+    - `DATA` - input dataset
+    - `OUT` - output dataset
+
+  - Impute with median or other measures - cont.vars
+    - simple but does not take in to account the effect of other vars
+      - ex: when imputing the value of a home, rather than the median of all home prices, its better to impute the median of the homes in the same zipcode.
+    - median is resistant to outliers
+    - use when there is missing <= 50% of cases
+    - If more than 50% of the values are missing,m then perhaps avoid that variable
+  - Cluster Imputation - cont.vars
+    - divides the dataset in to separate clusters based on other variables and imputed values based on the measures for the cluster/subset.
+    - ex: the home value imputation example above
+    - `PROC FASCLUS` does cluster imputation in SAS
+      - It creates clusters based on the parameters in the VAR statement
+  - Cat.Vars
+    - Create a new level in the cat.var that represent the missing values
+    - Quasi-Complete separation
+      - This occurs when the values for a categorical var is tha same value in all the obs. Ex: The number of japanese speakers in a remote village in africa might be 0 for all observations. cat.var might be = languages known, with levels- English, Swahili, and Japanese. 
+      - It becomes a perfect predictor.
+      - These levels need to be collapsed, so that the number of cat.vars is reduced. We can use `PROC CLUSTER` for this.
+      - `PROC CLUSTER` implements Greenacre's method. It tries to collapse category levels while minimizing the drop on the chi-squared value. It first collapses redundant category levels, and then collapses the category level that has very low values.  It's an interative process and when each iteration is processed if we plot the log(p-value) for chi-squared versus the number of clusters, we will see a U-shaped pattern. The bommom of the curve indicates the # of clusters that give good P-values (any less number of clusters and we have a significant loss in P-value.)  after a point at which the loss of the informaion is so grea that the model is useless.
+
+#### Redundant Data
+
+- Redundant variables is not related to the target variable - these destabilize the parameter estimates, overfitting the data, compute power and effort.
+- 
+- Variable reduction using variable clustering
+  1. Identify variable clusters - corelated with eachother, but not with others
+  2. Select a variable from each cluster.
+- `PROC VARCLUS` - Iterative Principal Components Analysis
+  - Iterative process called **Divisive Clustering**
+  - At each stage, a PCA is done and the second eigen value is checked if its above a threshold. the default is 1, and 0.7 is a good reccomended value as well.
+  - If the value is larger than cutoff, then the set is split in to two clusters PCA are done on each.
+  - Smaller cutoof yeilds more clusters.
+  - Example
+    ```
+    PROC VARCLUS DATA= <data> MAXEIGEN= <cutoff> ;
+      VAR &vars_to_include_in_model;
+    RUN;
+    ```
+
