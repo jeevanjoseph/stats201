@@ -53,12 +53,14 @@
     - [Interaction effects in Logistic regression](#Interaction-effects-in-Logistic-regression)
     - [Predictive analysis/ Scoring using Logistic regression](#Predictive-analysis-Scoring-using-Logistic-regression)
   - [Data preparation](#Data-preparation)
-      - [Missing data](#Missing-data)
-      - [Collapse the levels of categorical inputs.](#Collapse-the-levels-of-categorical-inputs)
-      - [Redundant Data](#Redundant-Data)
-        - [Step 1 - Variable reduction with Clustering](#Step-1---Variable-reduction-with-Clustering)
-        - [Step 2 - selecting a variable from each cluster](#Step-2---selecting-a-variable-from-each-cluster)
+    - [Missing data](#Missing-data)
+    - [Collapse the levels of categorical inputs.](#Collapse-the-levels-of-categorical-inputs)
+    - [Redundant Data](#Redundant-Data)
+      - [Step 1 - Variable reduction with Clustering](#Step-1---Variable-reduction-with-Clustering)
+      - [Step 2 - selecting a variable from each cluster](#Step-2---selecting-a-variable-from-each-cluster)
     - [Variable screening](#Variable-screening)
+    - [Automatic variable selection using PROC LOGISTIC](#Automatic-variable-selection-using-PROC-LOGISTIC)
+  - [Measuring Model Performance](#Measuring-Model-Performance)
 
 ## Hypothesis Testing
 
@@ -750,7 +752,7 @@ Using a logistic regression model to predict or score a new dataset is done simi
 
 ## Data preparation
 
-#### Missing data
+### Missing data
 
 - Complete case analysis - default in many procedures.
   - Leads to bias in the sample
@@ -775,7 +777,7 @@ Using a logistic regression model to predict or score a new dataset is done simi
     - `PROC FASCLUS` does cluster imputation in SAS
       - It creates clusters based on the parameters in the VAR statement
 
-#### Collapse the levels of categorical inputs.
+### Collapse the levels of categorical inputs.
 
 - Cases where there are to many levels in a categorial variable ex: postcode.
 - Create a new level in the cat.var that represent the missing values
@@ -783,9 +785,10 @@ Using a logistic regression model to predict or score a new dataset is done simi
   - This occurs when the values for a categorical var is tha same value in all the obs. Ex: The number of japanese speakers in a remote village in africa might be 0 for all observations. cat.var might be = languages known, with levels- English, Swahili, and Japanese. 
   - It becomes a perfect predictor.
   - These levels need to be collapsed, so that the number of cat.vars is reduced. We can use `PROC CLUSTER` for this.
-  - `PROC CLUSTER` implements Greenacre's method. It tries to collapse category levels while minimizing the drop on the chi-squared value. It first collapses redundant category levels, and then collapses the category level that has very low values.  It's an interative process and when each iteration is processed if we plot the log(p-value) for chi-squared versus the number of clusters, we will see a U-shaped pattern. The bommom of the curve indicates the # of clusters that give good P-values (any less number of clusters and we have a significant loss in P-value.)  after a point at which the loss of the informaion is so grea that the model is useless.
+  - `PROC CLUSTER` implements Greenacre's method. It tries to collapse category levels while minimizing the drop on the chi-squared value. It first collapses redundant category levels, and then collapses the category level that has very low values.  It's an interative process and when each iteration is processed if we plot the log(p-value) for chi-squared versus the number of clusters, we will see a U-shaped pattern. The bommom of the curve indicates the # of clusters that give good P-values (any less number of clusters and we have a significant loss in P-value.)  after a point at which the loss of the informaion is so great that the model is useless.
+  - The loss of information at each iteration is mesured by the drop in the Chi-Squared value and in the output this is marked as the R<sup>2</sup>
 
-#### Redundant Data
+### Redundant Data
 
 - Redundant variables is not related to the target variable - these destabilize the parameter estimates, overfitting the data, compute power and effort.
   
@@ -793,7 +796,7 @@ Using a logistic regression model to predict or score a new dataset is done simi
   1. Identify variable clusters - corelated with eachother, but not with others
   2. Select a variable from each cluster.
 
-##### Step 1 - Variable reduction with Clustering
+#### Step 1 - Variable reduction with Clustering
 
 - `PROC VARCLUS` - Iterative Principal Components Analysis
   - Iterative process called **Divisive Clustering**
@@ -811,7 +814,7 @@ Using a logistic regression model to predict or score a new dataset is done simi
   - The `SHORT` option is used to suppress detailed output
   - The `VAR` statement contains the numeric variable. if absent all numeric variables in the input are considered. Cat.Vars are not used by default, and if they need tob used, they need to be coded as dummy variables, using a `DO` loop
 
-##### Step 2 - selecting a variable from each cluster
+#### Step 2 - selecting a variable from each cluster
 
 The step of variable selection from each cluster is subjective. You could use :
 
@@ -828,5 +831,51 @@ The step of variable selection from each cluster is subjective. You could use :
   - The value ranges from -0.5 --- 0 --- +1, and values around the edges indicate more stronger relationship and the values around 0 indicate a weaker relationship
 
 - When a variable has a low rank on Spearman, and a High Rank on Hoeffding, that tell us that there is likely a nonlinear relation ship between that variable and the target.
-  -  A weak spearman correlation indicates a weak monotonic relationship, while a strong Hoeffding indicates a strong relationship including a nonlinear relationship, so the high Hoeffding must be attributed to a non linear relationship
+  - A weak spearman correlation indicates a weak monotonic relationship, while a strong Hoeffding indicates a strong relationship including a nonlinear relationship, so the high Hoeffding must be attributed to a non linear relationship.
+  - We can plot emperical logit plots to visualize the non linear realtionships or bin or discretize the values to account for this.
+    - When binning, the smoothing of the logit plots is determined by the number of bins. The fewer bins there are, the smoother the curve.
 
+### Automatic variable selection using PROC LOGISTIC
+
+- `PROC LOGISTIC` can use the same `selection=` option as `PROC GLCSELECT` and `PROC REG`
+  - selection is based on the wald chi-squared test statistic
+  - **Backward selection**
+    - `selection = BACKWARD SLSTAY= (0..1, def=0.5)` 
+    - *starts with all variables* in model and iteratively drops them based on the wald chi-squared test and the `SLSTAY` param.
+    - The variable with the largest P-value that is greater than `SLSTAY` is removed.
+    - Backwards methods are better at excluding spurious inputs that can happen in forward methods.
+    - Backwards methods suffer from quasi-complete separation (perform category level collapse to address) and multicollinearity. Inputs once excluded cannot be re-added.  
+  - **Stepwise**
+    - `selection = STEPWISE SLENTRY=(0..1|def=0.5) SLSTAY= (0..1, def=0.5)`
+    - *start with no parameters* and add parameters to the model based on the wald chi-squared test result and value for `SLENTRY`.
+    - at every iteration existing variables are re-evaluated and ejected from the model if they no longer meet the criteria based the the `SLSTAY`
+    - Stepwise selection does not work well in the case when there is multicollinearity in the variables. This can happen if the data preparation step does not address the redundant variables properly (using variable clustering)
+  - **Best subset selection** 
+    - `selection=SCORE best= 1`
+      - `best` selects the n best models that have the same number of variables.
+      - So the 1 best model with 1 var, 1 best model with 2 vars.. until 1 best model with k vars (all vars).
+    - Most comprehensive method 
+    - computes all combinations of the variables and **rank orders their chi-squared score**.
+    - Results in evaluating 2<sup>k</sup> models for k variables and is very expesive, for large number of variables.
+    - This calculates the the chi-squared value for all the combinations, but does not actually select a model. The chi-squared values never decreses in the models that are output from `PROC LOGISTIC`. So we need to perform fit statistics for finding out the most parsimonious model.
+    - This uses the same techniques as linear regression to penalize the addition of variables to the model and generate fit statistics like AIC, AICC and BIC, and SBC.
+  - **Default selection is NONE**
+  - Performance characteristics
+    - Best-subset method performance follows a quadratic curve. Its fast for small number of inputs (<60), but then the time increases quadratically 
+    - FAST backward selection exhibits a linear increase in the time as the number of variables increase. its predictable
+    - Stepwise is the poorest performing since the model has to be refit at each step. It follows a quadratic curve.
+
+## Measuring Model Performance
+
+**Optimism principle** : If you use the same data to test a classifier model as the data you used to fit the model, then you will get better results that are misleading and you will end up overfitting or underfitting the data.
+
+To avoid this split the data in to two or more datasets :
+
+Training dataset : used to fit the model
+Validation dataset : used to test and comapre models. Have atleast 10 events per each input variable. 
+Test dataset : used to do a final test on the selected model.
+
+**Rare target events** : when the target event is rare, we can use bootstraping or k-fold cross validation. 
+
+- **Bootstraping** is repeated sampling with repleacement. Multiple samples are taken with the response variable and models fitting is done and the model statistics are averages across the models. 
+- **K-Fold cross validation** - is partitioning the data into k partitions. then models are trained using k-1 parts and validated on the one part that was not used for training. It does not give the final model - the final model is created by fitting the data to the entire dataset.
