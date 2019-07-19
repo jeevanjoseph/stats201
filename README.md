@@ -41,10 +41,10 @@
   - [Data Scoring with your model](#Data-Scoring-with-your-model)
     - [Apply a model to predict response variables in a new dataset](#Apply-a-model-to-predict-response-variables-in-a-new-dataset)
   - [Logistic Regression](#Logistic-Regression)
+    - [Overall process](#Overall-process)
     - [Model the relationship between a **binary response** vs. set of predictors (cont. or cat.)](#Model-the-relationship-between-a-binary-response-vs-set-of-predictors-cont-or-cat)
     - [PROC FREQ](#PROC-FREQ)
       - [Discover associations and evaluate classifier performance](#Discover-associations-and-evaluate-classifier-performance)
-    - [Classifier Performance](#Classifier-Performance)
     - [Tests of association](#Tests-of-association)
     - [Detecting Ordinal Associations](#Detecting-Ordinal-Associations)
     - [PROC LOGISTIC](#PROC-LOGISTIC)
@@ -61,6 +61,12 @@
     - [Variable screening](#Variable-screening)
     - [Automatic variable selection using PROC LOGISTIC](#Automatic-variable-selection-using-PROC-LOGISTIC)
   - [Measuring Model Performance](#Measuring-Model-Performance)
+    - [Classifier Performance](#Classifier-Performance)
+      - [ROC curve & AUC](#ROC-curve--AUC)
+      - [Gains Chart and Lift Charts](#Gains-Chart-and-Lift-Charts)
+      - [Profit Prediction](#Profit-Prediction)
+      - [Bayes Rule](#Bayes-Rule)
+      - [Kolmogorov - Smirnov Statistic](#Kolmogorov---Smirnov-Statistic)
 
 ## Hypothesis Testing
 
@@ -532,6 +538,30 @@ Compared to Linear Regression, we cannot apply the tools and fitting techniques 
 
 Basic review of tools and techniques for categorical response variables follows:
 
+### Overall process
+
+1. Data Prep
+   1. Deal with Missing data
+      2. `PROC STDIZE` to impute values
+      3. `PROC FASCLUS` to do cluster imputation
+   2. Reduce levels in Categorial variables
+      1. `PROC CLUSTER` uses Greenacre's method
+      2. Collapse levels with fewer obs and ones that have the least impact on the Chi-Squared
+      3. R<sup>2</sup> indicates the proportion of the chi-squared remaining in each iteration compared to the original
+      4. Plot the log(p-value) to see Ideal cluster count.
+   3. Reduce the overall input variables by reducing redundancy
+      1. `PROC VARCLUS` to cluster variables that have similar effect on the target
+      2. Select one variable from each cluster based on 1-R<sup>2</sup> value or SME input. 1-R<sup>2</sup> represents how the variable is corelated to within group to outside group. 
+      3. Pick variable that have a high correlation within group and least correlation outside its group.
+   4. Screen the variables 
+      1. We are trying to find poor performing variable, and not trying to find the most predictive ones.
+      2. Look for non-linear relationships using Spearman co-efficient and Hoeffding value. Plot the spearman vs Hoeffding it should be relatively linear. Any thing that deviates from a linear line can be eliminated (non-linear relationsip) and anything with a very high value for both spearman and heoffding can be eliminated (upper right quadrant for the plot)
+      3. For the non linear ones, discretize the continuous variables and plot the emperical logit plots. These may show a quadratic relationships, and thier binned percentile plots should be linear.
+2. Run the clean inputs to `PROC LOGISTIC` Do automatic model selection using SCORE/STEPWISE/BACKWARD methods. If using Best Set method, after scoring the chi-squared values, generate fit statistics and select a model.
+3. Select the model and valiadte using the valiadtion dataset.
+4. Evaluate fit and see how well the odel generalizes.
+
+
 ### Model the relationship between a **binary response** vs. set of predictors (cont. or cat.)
 
 It models the probability of an outcome based on the predictor variables. In logistic regression, the dependent/response variable is always a categorical variable with two levels.
@@ -545,43 +575,6 @@ It models the probability of an outcome based on the predictor variables. In log
 #### Discover associations and evaluate classifier performance
 
 `PROC FREQ` can display frequencies of the input variables or generate cross tabulation tables to discover associations between the categorical variables.
-
-### Classifier Performance
-
-Classifier performance is an indication of how well our model performs with respect to known data. Any logistic model (predicting a binary target) will have some False Positives, False Negatives, True Positives and True Negatives. A model that minimizes the false positives and false negatives is a better model.
-
-Consider the following confusion matrix (table with predicted binary reponses and actual binary responses)
-
-|            |Predicted True| Predicted False| Total|
--------------|--------------|----------------|------|
-|Actual True |100   (TP)    |8      (FN)     | 108  |
-|Actual False|2     (FP)    |50     (TN)     |52    |
-|Total       |102           |58              |160   |
-
-- **True Positive (TP)** - The model predicted a positive result, and the result as infact positive
-- **False Positive (FP)** - The model predicted a positive result, but the actual result as negaive. Disease model predits a patient will have a disease but he does not.
-- **True Negative (TN)** - The model predicts a negative result and the result is infact negative.
-- **False Negative (FN)** - The model predicts a negative result, but the actual result is positive. Disease model predicts no disease, but the person actually is diseased.
-- **Accuracy**: Overall, how often is the classifier correct?
-  - (TP+TN)/total = (100+50)/160 = 0.94
-- **Misclassification Rate**: Overall, how often is it wrong?
-  - (FP+FN)/total = (8+2)/160 = 0.06
-  - equivalent to 1 minus Accuracy also known as "Error Rate"
-- **Sensitivity / True Positive Rate**: When it's actually yes, how often does it predict yes?
-  - TP/actual yes = 100/108 = 0.93
-  - also known as "Recall"
-- **False Positive Rate**: When it's actually no, how often does it predict yes?
-  - FP/actual no = 2/52 = 0.04
-- **Specificity / True Negative Rate**: When it's actually no, how often does it predict no?
-  - TN/actual no = 50/52 = 0.96
-  - equivalent to 1 minus False Positive Rate
-- **Precision**: When it predicts yes, how often is it correct?
-  - TP/predicted yes = 100/102 = 0.98
-- **Prevalence**: How often does the yes condition actually occur in our sample?
-  - actual yes/total = 102/160 = 0.63
-- **ROC curve & AUC** - ROC Curve is plotted between the TPR/Sensitivity (y-axis) vs. False Positive Rate(x-axis). You set a thereshold to minimize False Positives, or maximize true poistives. If the model is very discriminating, then we would have a good TPR for a low threshold of FPR. The AUC is the are under th curve and ranges from .5 to 1, and the larger the area, the more discrininating the model. So better models have a ROC that hugs the top left corner.
-
-
 
 ### Tests of association
 
@@ -675,6 +668,8 @@ If we take a representative sample when modelling a rare event, then this may gi
 - To correct the bias, the offset is applied to reduce the intercept
 - The offset only affects the intercept and not the other parameter estimates
 - The Pi-1 value of the population - the proportion of events in the population need to be known to compute the offset.
+- Oversampling does not affect the sensitivity or specificity, so it also does not affect the ROC curve.
+- It does affect the PV+ and PV-, so the gains chart and lift charts are affected
 
 #### Result interpretation
 
@@ -785,8 +780,8 @@ Using a logistic regression model to predict or score a new dataset is done simi
   - This occurs when the values for a categorical var is tha same value in all the obs. Ex: The number of japanese speakers in a remote village in africa might be 0 for all observations. cat.var might be = languages known, with levels- English, Swahili, and Japanese. 
   - It becomes a perfect predictor.
   - These levels need to be collapsed, so that the number of cat.vars is reduced. We can use `PROC CLUSTER` for this.
-  - `PROC CLUSTER` implements Greenacre's method. It tries to collapse category levels while minimizing the drop on the chi-squared value. It first collapses redundant category levels, and then collapses the category level that has very low values.  It's an interative process and when each iteration is processed if we plot the log(p-value) for chi-squared versus the number of clusters, we will see a U-shaped pattern. The bommom of the curve indicates the # of clusters that give good P-values (any less number of clusters and we have a significant loss in P-value.)  after a point at which the loss of the informaion is so great that the model is useless.
-  - The loss of information at each iteration is mesured by the drop in the Chi-Squared value and in the output this is marked as the R<sup>2</sup>
+  - `PROC CLUSTER` implements Greenacre's method. It tries to collapse category levels while minimizing the drop on the chi-squared value. It first collapses redundant category levels, and then collapses the category level that has very low values.  It's an interative process and when each iteration is processed if we plot the log(p-value) for chi-squared versus the number of clusters, we will see a U-shaped pattern. The bottom of the curve indicates the # of clusters that give good P-values (any less number of clusters and we have a significant loss in P-value.)  after a point at which the loss of the informaion is so great that the model is useless.
+  - The loss of information at each iteration is mesured by the drop in the Chi-Squared value and in the output the proportion of the chi-square that remains with each collapse is marked as the R<sup>2</sup>. So to get the Chi-Square of a model, ( overall_chi-square * R<sup>2</sup> )
 
 ### Redundant Data
 
@@ -823,8 +818,8 @@ The step of variable selection from each cluster is subjective. You could use :
 
 ### Variable screening
 
-- Variable screening acan further reduce the number of inputs becasue `PROC LOGISTIC` uses the full model.
-- After variable clustering, which identifies and collapses the correlated variables, the input screening method with univariate statistics can be used to detect irrelevant variables and non linear relationships between the variables.
+- Variable screening can further reduce the number of inputs becasue `PROC LOGISTIC` uses the full model.
+- After variable clustering, which identifies and collapses the correlated variables, the input screening method with univariate statistics - `PROC CORR` - can be used to detect irrelevant variables and non linear relationships between the variables.
 - Spearman's correlation - measures the non linear, but monotonic (Y never decreases when X increses, but rate of change in Y can change)relationships.
   - Interpertation is similar to Pearson correlation, value ranges from -1 ---- 0 ---- +1. Values near +/- 1 indicate strong relationships and values around 0 indicate a weaker relationship
 - Hoeffding correlation statistic can detect non-linear relationships as well. When the function is non-monotonic. 
@@ -837,7 +832,7 @@ The step of variable selection from each cluster is subjective. You could use :
 
 ### Automatic variable selection using PROC LOGISTIC
 
-- `PROC LOGISTIC` can use the same `selection=` option as `PROC GLCSELECT` and `PROC REG`
+- `PROC LOGISTIC` can use the same `selection=` option as `PROC GLMSELECT` and `PROC REG`
   - selection is based on the wald chi-squared test statistic
   - **Backward selection**
     - `selection = BACKWARD SLSTAY= (0..1, def=0.5)` 
@@ -850,18 +845,19 @@ The step of variable selection from each cluster is subjective. You could use :
     - *start with no parameters* and add parameters to the model based on the wald chi-squared test result and value for `SLENTRY`.
     - at every iteration existing variables are re-evaluated and ejected from the model if they no longer meet the criteria based the the `SLSTAY`
     - Stepwise selection does not work well in the case when there is multicollinearity in the variables. This can happen if the data preparation step does not address the redundant variables properly (using variable clustering)
-  - **Best subset selection** 
+  - **Best/All subset selection** 
     - `selection=SCORE best= 1`
       - `best` selects the n best models that have the same number of variables.
       - So the 1 best model with 1 var, 1 best model with 2 vars.. until 1 best model with k vars (all vars).
-    - Most comprehensive method 
+    - Most comprehensive method
+    - This method does not support `CLASS` baed selection, so dummay variables need to be created manually
     - computes all combinations of the variables and **rank orders their chi-squared score**.
     - Results in evaluating 2<sup>k</sup> models for k variables and is very expesive, for large number of variables.
-    - This calculates the the chi-squared value for all the combinations, but does not actually select a model. The chi-squared values never decreses in the models that are output from `PROC LOGISTIC`. So we need to perform fit statistics for finding out the most parsimonious model.
-    - This uses the same techniques as linear regression to penalize the addition of variables to the model and generate fit statistics like AIC, AICC and BIC, and SBC.
+    - This calculates the the chi-squared value for all the combinations, but does not actually select a model. The chi-squared values never decreases in the models that are output from `PROC LOGISTIC`. So we need to perform fit statistics for finding out the most parsimonious model.
+    - This uses the same techniques as linear regression to penalize the addition of variables to the model and generate fit statistics like AIC, AICC and BIC, and SBC and Brier Score. Brier score is a method to measure the delta between the predicted and 
   - **Default selection is NONE**
   - Performance characteristics
-    - Best-subset method performance follows a quadratic curve. Its fast for small number of inputs (<60), but then the time increases quadratically 
+    - Best-subset method performance follows a quadratic curve. Its fast for small number of inputs (<60), but when the #inputs increase, the time increases quadratically
     - FAST backward selection exhibits a linear increase in the time as the number of variables increase. its predictable
     - Stepwise is the poorest performing since the model has to be refit at each step. It follows a quadratic curve.
 
@@ -871,11 +867,119 @@ The step of variable selection from each cluster is subjective. You could use :
 
 To avoid this split the data in to two or more datasets :
 
-Training dataset : used to fit the model
-Validation dataset : used to test and comapre models. Have atleast 10 events per each input variable. 
-Test dataset : used to do a final test on the selected model.
+- Training dataset : used to fit the model
+- Validation dataset : used to test and comapre models. Have atleast 10 events per each input variable
+- Test dataset : used to do a final test on the selected model.
 
-**Rare target events** : when the target event is rare, we can use bootstraping or k-fold cross validation. 
+**Stratification** -  is the process to ensure that the datasets are divided in to the Training and Validations sets that contain an approxinmately equal proprtion of the target event. Ex: to make sure that the if the 10% of the obs in Training data contains target, the 10% of the validation dataset also contains the target. We can use `PROC SURVEYSELECT` to split the dataset and do stratification.
+
+```SAS
+PROC SURVEYSELECT data= <dataset> 
+                  seed=555 
+                  samprate=.667 
+                  out= <output_dataset> 
+                  outall;
+ STRATA <var_to_use_for_stratification>
+ RUN;
+```
+
+**Rare target events** : when the target event is rare, we can use bootstraping or k-fold cross validation to generate the training and validation datasets. We could also use oversampling and then adjust for the oversampling by using an offset 
 
 - **Bootstraping** is repeated sampling with repleacement. Multiple samples are taken with the response variable and models fitting is done and the model statistics are averages across the models. 
 - **K-Fold cross validation** - is partitioning the data into k partitions. then models are trained using k-1 parts and validated on the one part that was not used for training. It does not give the final model - the final model is created by fitting the data to the entire dataset.
+
+### Classifier Performance
+
+Classifier performance is an indication of how well our model performs with respect to known data. Any logistic model (predicting a binary target) will have some False Positives, False Negatives, True Positives and True Negatives. A model that minimizes the false positives and false negatives is a better model.
+
+Consider the following confusion matrix (table with predicted binary reponses and actual binary responses)
+
+|            |Predicted True| Predicted False| Total|
+-------------|--------------|----------------|------|
+|Actual True |100   (TP)    |8      (FN)     | 108  |
+|Actual False|2     (FP)    |50     (TN)     |52    |
+|Total       |102           |58              |160   |
+
+- **True Positive (TP)** - The model predicted a positive result, and the result as infact positive
+- **False Positive (FP)** - The model predicted a positive result, but the actual result as negaive. Disease model predits a patient will have a disease but he does not.
+- **True Negative (TN)** - The model predicts a negative result and the result is infact negative.
+- **False Negative (FN)** - The model predicts a negative result, but the actual result is positive. Disease model predicts no disease, but the person actually is diseased.
+- **Accuracy**: Overall, how often is the classifier correct?
+  - (TP+TN)/total = (100+50)/160 = 0.94
+- **Misclassification Rate**: Overall, how often is it wrong?
+  - (FP+FN)/total = (8+2)/160 = 0.06
+  - equivalent to 1 minus Accuracy also known as "Error Rate"
+- **Sensitivity / True Positive Rate**: When it's actually yes, how often does it predict yes?
+  - TP/actual yes = 100/108 = 0.93
+  - also known as "Recall"
+- **False Positive Rate**: When it's actually no, how often does it predict yes?
+  - FP/actual no = 2/52 = 0.04
+- **Specificity / True Negative Rate**: When it's actually no, how often does it predict no?
+  - TN/actual no = 50/52 = 0.96
+  - equivalent to 1 minus False Positive Rate
+- **Positive Predicted value or PV+ / Precision**: When it predicts yes, how often is it correct?
+  - TP/predicted yes = 100/102 = 0.98
+- **Prevalence**: How often does the yes condition actually occur in our sample?
+  - actual yes/total = 102/160 = 0.63
+
+Cutoff - Each cutoff will generate a different confusion matrix. When the cutoff is low, we classify more obs as positive - so the sensitivity is higher (we catch more of the true positives) at the cost of specificity (we inadvertedly catch a lot of False positives as well.)
+
+#### ROC curve & AUC
+ROC Curve is plotted between the TPR/Sensitivity (y-axis) vs. False Positive Rate/ 1-Sepcificity (x-axis). The curve shows the sensitivity and false positive rates for the whole range of cutoff values (0-1). You set a thereshold to minimize False Positives, or maximize true poistives. If the model is very discriminating, then we would have a good TPR for a low threshold of FPR. The AUC is the are under th curve and ranges from .5 (diagonal) to 1 (totally hugs the left and top edges), and the larger the area, the more discrininating the model. So better models have a ROC that hugs the top left corner.
+
+#### Gains Chart and Lift Charts
+
+- visual aid to measure the efficetivness of a model. Compares the reponses with a model to without a model.
+- Maps the positive predicted value - PV+ (TP/Pred.+) - to the depth. Depth is the percentage of Positives selected by the cutoff. Ex: if the cutoff is 0, then all values are predicted positive - 100%. If the cutoff is 1, then all values are predicted as negative - percentage of positives selected = 0%.
+- So that the cutoff increases - model becomes more selective, the depth decreases. You are targeting fewer but surer observations.
+- For a good predictive model the positive predictive value increases as he depth decreases.
+- Lift Charts - they are similar to the gains chart and tells us how much the the prediction model is better than random chance.
+- This looks similar to the gains chart, and tells us that the smaller percentage of cases we target the higher out lift will be when using a good model.
+- Lift and cumulative gains charts differ in only the Y-axis scale. Cumulative gains is plotted with the Positive Predicted Value to the depth, while Lift is plotted with the PV+/(random chance). So the lift number gives you the factor by which the model improves the reponse. 
+
+#### Profit Prediction
+
+Optimal cutoff for the logistic regression model is usually based on the profit. Use a profit matrix to find the optimal cutoff. If the cost of an offer is $1 and return is $100, for every predicted positive, we spend $1, and from those, if the actual response is positive, we make $100, netting a profit of $99. If the predicted positive is a false positive, we lose $1.
+
+|            |Predicted True| Predicted False|
+-------------|--------------|----------------|
+|Actual True |$99  TPProfit |0               |
+|Actual False|$-1  FPLoss   |0               |
+
+When combined with the actual confusion matrix for varisous cutoofs, we can see the net profit. This will be (TP * TPProfit) - (FP*FPLoss)
+
+#### Bayes Rule
+
+To find the most profitable cutoff across all possible cutoffs, the the Bayes rule
+
+p = 1/1+[ (TPProfit- FNProfit) / ( TrueNegativeProfit - FPLoss) ]
+
+in the above case , it's
+
+> p  =  1/1+[(99 - 0) / (0 - -1)]
+> 
+> p  = 1/1+ (99/+1) = 1/100 = 0.01
+
+In cases where the profit information is not known, the central cutoff is used. this is the meeting point of the Sensitivity and Specificity - the value at wich they meet (the point at which they are equal)
+
+The average profit can be graphed against either the cutoff (to see how setting a cutoff will affect the average profit) or the depth (the graph will show a curve that maps profit as the depath increases, and after a point the the cost with diminish the returns)
+
+#### Kolmogorov - Smirnov Statistic
+
+Is a measure of the overall performance of a model. Its frequently used in financial analysis. 
+
+One way to check the predictive power is to see the discriminating power of the model. To compare two samples, you can use the 2-sample T test. however, the T test assumes the normality of the variances, which cannot be guantanteed when we are discussing the distribution of events vs non events. They will have different variances - the alternative is to use the KS-Statistic.
+
+SAS uses the `D-Statistic` in the `PROC NPAR1WAY` with the `EDF` option. The higher value of D-stat, the better the model.
+The KS-Test tests the shape, variance and central tendency of the distribution. For model evaluation central tendency is the most important.
+
+The Wilcoxon-Mann-Whitney test is a better test for central tendency, and its value is the same as that of the C-Statistic (area under the ROC curve or AUC) in the `PROC LOGISTIC`. 
+
+> Both the KS-Statistic and the C-Statistic are unaffected by oversampling because teh emperical cumulative distribution function is unchanged when each case represents more than one case in the population.
+
+```SAS
+PROC NPAR1WAY edf data= <dataset>;
+  CLASS binary_target;
+  VAR Probabilities;
+RUN;
+```
