@@ -67,6 +67,7 @@
       - [Profit Prediction](#Profit-Prediction)
       - [Bayes Rule](#Bayes-Rule)
       - [Kolmogorov - Smirnov Statistic](#Kolmogorov---Smirnov-Statistic)
+    - [Comparing models using plots](#Comparing-models-using-plots)
 
 ## Hypothesis Testing
 
@@ -983,3 +984,10 @@ PROC NPAR1WAY edf data= <dataset>;
   VAR Probabilities;
 RUN;
 ```
+
+### Comparing models using plots
+
+A popular way to compare models is to score the data with many models in increasing complexinty and then choosing the most parsimonious one.
+You could plot the fit statistics of each model in increasing complexity, for the training and validation datasets. When we do this we notice that the fit and complexity increase initially as valid terms are added to the model and then after a point the fit does not improve with increasing complexity (the point at which the new terms added do not seem to have much predictive power). Interestingly, after this point the fit may improve for the traning dataset and the same model the fit drops for the validation dataset - a clear indication that the model is being overfit and generalization being lost.
+
+This difference/divergence in the curves is called **shrinkage** and we can select model that minimize or limit shrinkage to strike a balance between the generalization, predictive power and the complexity of the model.
